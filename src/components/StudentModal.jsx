@@ -1,12 +1,16 @@
 import { useState } from 'react'
 
 // O'quvchi qo'shish/tahrirlash modali
-// student — tahrirlash uchun mavjud o'quvchi (yangi qo'shishda null)
-// groups — dropdown uchun guruhlar ro'yxati
-export default function StudentModal({ student, groups, onSave, onClose }) {
+// student     — tahrirlash uchun mavjud o'quvchi (yangi qo'shishda null)
+// groups      — dropdown uchun guruhlar ro'yxati
+// lockedGroup — { id, nomi } — agar berilsa, guruh o'zgartirib bo'lmaydi (group detail sahifasidan ochilganda)
+export default function StudentModal({ student, groups, lockedGroup, onSave, onClose }) {
   const [ism,           setIsm]           = useState(student?.ism              ?? '')
   const [telefon,       setTelefon]       = useState(student?.telefon_raqami   ?? '')
-  const [selectedGroup, setSelectedGroup] = useState(student?.group_id         ?? '')
+  // lockedGroup berilgan bo'lsa, uning ID sini ishlatamiz
+  const [selectedGroup, setSelectedGroup] = useState(
+    lockedGroup?.id ?? student?.group_id ?? ''
+  )
 
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
@@ -88,16 +92,25 @@ export default function StudentModal({ student, groups, onSave, onClose }) {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Guruh <span className="text-red-500">*</span>
             </label>
-            <select
-              value={selectedGroup}
-              onChange={e => setSelectedGroup(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-white"
-            >
-              <option value="">— Guruhni tanlang —</option>
-              {groups.map(g => (
-                <option key={g.id} value={g.id}>{g.nomi}</option>
-              ))}
-            </select>
+            {lockedGroup ? (
+              // Guruh detail sahifasidan ochilganda — guruh o'zgartirib bo'lmaydi
+              <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-700 flex items-center gap-2">
+                <span>👥</span>
+                <span className="font-medium">{lockedGroup.nomi}</span>
+                <span className="text-xs text-gray-400 ml-1">(avtomatik)</span>
+              </div>
+            ) : (
+              <select
+                value={selectedGroup}
+                onChange={e => setSelectedGroup(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-white"
+              >
+                <option value="">— Guruhni tanlang —</option>
+                {groups.map(g => (
+                  <option key={g.id} value={g.id}>{g.nomi}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Tugmalar */}

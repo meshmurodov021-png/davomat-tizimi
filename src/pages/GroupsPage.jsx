@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getGroups, createGroup, updateGroup, deleteGroup } from '../lib/groupsApi'
 import Loading from '../components/Loading'
@@ -15,7 +16,8 @@ const DAY_SHORT = {
 const DAY_ORDER = ['dushanba','seshanba','chorshanba','payshanba','juma','shanba','yakshanba']
 
 export default function GroupsPage() {
-  const { user } = useAuth()
+  const { user }   = useAuth()
+  const navigate   = useNavigate()
 
   const [groups,  setGroups]  = useState([])
   const [loading, setLoading] = useState(true)
@@ -117,15 +119,23 @@ export default function GroupsPage() {
             return (
               <div
                 key={group.id}
-                className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 p-4">
 
-                  {/* Guruh ma'lumotlari */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-800 text-base truncate">
-                      {group.nomi}
-                    </h3>
+                  {/* Bosish maydoni — guruh detail sahifasiga o'tadi */}
+                  <button
+                    onClick={() => navigate(`/groups/${group.id}`)}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-semibold text-gray-800 text-base truncate">
+                        {group.nomi}
+                      </h3>
+                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full shrink-0">
+                        → ko'rish
+                      </span>
+                    </div>
 
                     {/* Qo'shimcha ma'lumotlar */}
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-sm text-gray-500">
@@ -155,19 +165,19 @@ export default function GroupsPage() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </button>
 
-                  {/* Amallar tugmalari */}
+                  {/* Amallar tugmalari — alohida, kartochkani bosishni to'xtatadi */}
                   <div className="flex gap-2 shrink-0">
                     <button
-                      onClick={() => openEditModal(group)}
+                      onClick={e => { e.stopPropagation(); openEditModal(group) }}
                       className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-colors text-gray-500"
                       title="Tahrirlash"
                     >
                       ✏️
                     </button>
                     <button
-                      onClick={() => setDeleteTarget(group)}
+                      onClick={e => { e.stopPropagation(); setDeleteTarget(group) }}
                       className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-colors text-gray-500"
                       title="O'chirish"
                     >

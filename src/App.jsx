@@ -3,10 +3,11 @@ import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 
-import LoginPage     from './pages/LoginPage'
-import DashboardPage from './pages/DashboardPage'
-import GroupsPage    from './pages/GroupsPage'
-import StudentsPage  from './pages/StudentsPage'
+import LoginPage       from './pages/LoginPage'
+import DashboardPage   from './pages/DashboardPage'
+import GroupsPage      from './pages/GroupsPage'
+import GroupDetailPage from './pages/GroupDetailPage'
+import StudentsPage    from './pages/StudentsPage'
 
 export default function App() {
   return (
@@ -32,6 +33,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Layout><GroupsPage /></Layout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Guruh ichidagi o'quvchilar sahifasi */}
+          <Route
+            path="/groups/:groupId"
+            element={
+              <ProtectedRoute>
+                <Layout><GroupDetailPage /></Layout>
               </ProtectedRoute>
             }
           />

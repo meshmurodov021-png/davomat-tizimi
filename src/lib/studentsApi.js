@@ -1,5 +1,17 @@
 import { supabase } from './supabase'
 
+// Faqat bitta guruhga tegishli o'quvchilarni olish
+export async function getStudentsByGroup(groupId) {
+  const { data, error } = await supabase
+    .from('students')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('yaratilgan_sana', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return data
+}
+
 // Barcha o'quvchilarni guruh ma'lumotlari bilan birga olish
 export async function getStudents() {
   const { data, error } = await supabase

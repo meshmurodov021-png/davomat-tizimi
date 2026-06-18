@@ -1,2 +1,13 @@
 /* Tailwind CSS v4 — barcha utility class larni yuklaydi */
 @import "tailwindcss";
+
+/* Barcha tugmalar va bosiladigan elementlarda cursor pointer va border radius */
+@layer base {
+  button, [role="button"] {
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  select, label[for] {
+    cursor: pointer;
+  }
+}
