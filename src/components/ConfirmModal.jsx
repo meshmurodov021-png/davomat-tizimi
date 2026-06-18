@@ -1,34 +1,30 @@
-// O'chirish tasdiqlash modali — "Rostdan ham o'chirmoqchimisiz?" deb so'raydi
+import { AlertTriangle } from 'lucide-react'
+
 export default function ConfirmModal({ message, onConfirm, onCancel }) {
   return (
-    // Qora shaffof fon — modal ortida sahifani yopadi
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg border border-[#E7E5E4] shadow-lg w-full max-w-sm p-6">
 
-        {/* Ogohlantirish belgisi */}
-        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-red-600 text-2xl">⚠️</span>
+        <div className="flex items-start gap-4">
+          <div className="w-9 h-9 rounded-lg bg-[#FEF2F2] flex items-center justify-center shrink-0">
+            <AlertTriangle size={17} className="text-[#DC2626]" strokeWidth={1.75} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-[#1C1917] text-sm mb-1">Tasdiqlash</h3>
+            <p className="text-sm text-[#78716C] leading-relaxed">{message}</p>
+          </div>
         </div>
 
-        <h3 className="text-lg font-semibold text-gray-800 text-center mb-2">
-          Tasdiqlash
-        </h3>
-        <p className="text-gray-500 text-center mb-6 text-sm">
-          {message}
-        </p>
-
-        <div className="flex gap-3">
-          {/* Bekor qilish */}
+        <div className="flex gap-2 mt-5">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 py-2 text-sm font-medium text-[#1C1917] bg-white border border-[#E7E5E4] hover:bg-[#F5F5F4] transition-colors rounded"
           >
             Bekor qilish
           </button>
-          {/* Tasdiqlash */}
           <button
             onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
+            className="flex-1 py-2 text-sm font-medium text-white bg-[#DC2626] hover:bg-[#B91C1C] transition-colors rounded"
           >
             O'chirish
           </button>

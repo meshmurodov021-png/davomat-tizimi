@@ -1,126 +1,109 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { Users, GraduationCap, ChevronRight } from 'lucide-react'
 import { getGroupsCount } from '../lib/groupsApi'
 import { getStudentsCount } from '../lib/studentsApi'
 import Loading from '../components/Loading'
 
-// Statistika kartochkasi komponenti
-function StatCard({ icon, label, value, color, onClick }) {
+function StatCard({ label, value, Icon, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow text-left`}
+      className="w-full bg-white border border-[#E7E5E4] rounded-lg p-5 text-left hover:border-[#2563EB]/40 hover:shadow-sm transition-all"
     >
-      <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center mb-3`}>
-        <span className="text-2xl">{icon}</span>
-      </div>
-      <p className="text-3xl font-bold text-gray-800 mb-1">
+      <p className="text-3xl font-bold text-[#1C1917] mb-1 tabular-nums">
         {value ?? '—'}
       </p>
-      <p className="text-sm text-gray-500">{label}</p>
+      <div className="flex items-center gap-1.5 text-sm text-[#78716C]">
+        <Icon size={14} strokeWidth={1.75} />
+        {label}
+      </div>
     </button>
   )
 }
 
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
 
-  const [groupsCount, setGroupsCount]     = useState(null)
+  const [groupsCount,   setGroupsCount]   = useState(null)
   const [studentsCount, setStudentsCount] = useState(null)
-  const [loading, setLoading]             = useState(true)
-  const [error, setError]                 = useState('')
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState('')
 
   useEffect(() => {
     async function loadStats() {
       try {
-        // Ikkala so'rovni bir vaqtda yuboramiz — tezroq ishlaydi
         const [groups, students] = await Promise.all([
           getGroupsCount(),
           getStudentsCount(),
         ])
         setGroupsCount(groups)
         setStudentsCount(students)
-      } catch (err) {
+      } catch {
         setError("Ma'lumotlarni yuklashda xatolik yuz berdi.")
       } finally {
         setLoading(false)
       }
     }
-
     loadStats()
   }, [])
 
-  if (loading) return <Loading text="Statistika yuklanmoqda..." />
+  if (loading) return <Loading text="Yuklanmoqda..." />
 
   return (
     <div>
-      {/* Sarlavha */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Bosh sahifa</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Xush kelibsiz! 👋
-        </p>
+        <h1 className="text-lg font-semibold text-[#1C1917]">Bosh sahifa</h1>
+        <p className="text-sm text-[#78716C] mt-0.5">Umumiy ko'rinish</p>
       </div>
 
-      {/* Xatolik xabari */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">
+        <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-4 text-sm">
           {error}
         </div>
       )}
 
-      {/* Statistika kartochkalari */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      {/* Statistika */}
+      <div className="grid grid-cols-2 gap-3 mb-8">
         <StatCard
-          icon="👥"
           label="Jami guruhlar"
           value={groupsCount}
-          color="bg-blue-100"
+          Icon={Users}
           onClick={() => navigate('/groups')}
         />
         <StatCard
-          icon="🎓"
           label="Jami o'quvchilar"
           value={studentsCount}
-          color="bg-green-100"
+          Icon={GraduationCap}
           onClick={() => navigate('/students')}
         />
       </div>
 
       {/* Tezkor havolalar */}
-      <h2 className="text-base font-semibold text-gray-700 mb-3">Tezkor havolalar</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
-          onClick={() => navigate('/groups')}
-          className="flex items-center gap-3 bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all text-left"
-        >
-          <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-xl shrink-0">
-            👥
-          </div>
-          <div>
-            <p className="font-medium text-gray-800 text-sm">Guruhlarni boshqarish</p>
-            <p className="text-xs text-gray-500">Qo'shish, tahrirlash, o'chirish</p>
-          </div>
-          <span className="ml-auto text-gray-300">›</span>
-        </button>
-
-        <button
-          onClick={() => navigate('/students')}
-          className="flex items-center gap-3 bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all text-left"
-        >
-          <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-xl shrink-0">
-            🎓
-          </div>
-          <div>
-            <p className="font-medium text-gray-800 text-sm">O'quvchilarni boshqarish</p>
-            <p className="text-xs text-gray-500">Qo'shish, qidirish, tahrirlash</p>
-          </div>
-          <span className="ml-auto text-gray-300">›</span>
-        </button>
+      <h2 className="text-xs font-semibold text-[#78716C] uppercase tracking-wider mb-3">
+        Tezkor o'tish
+      </h2>
+      <div className="bg-white border border-[#E7E5E4] rounded-lg divide-y divide-[#E7E5E4]">
+        {[
+          { to: '/groups',   Icon: Users,          label: 'Guruhlarni boshqarish',    sub: "Qo'shish, tahrirlash, o'chirish" },
+          { to: '/students', Icon: GraduationCap,  label: "O'quvchilarni boshqarish", sub: "Qidirish, qo'shish, tahrirlash" },
+        ].map(({ to, Icon, label, sub }) => (
+          <button
+            key={to}
+            onClick={() => navigate(to)}
+            className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-[#F5F5F4] transition-colors first:rounded-t-lg last:rounded-b-lg"
+          >
+            <div className="w-8 h-8 bg-[#F5F5F4] border border-[#E7E5E4] rounded flex items-center justify-center shrink-0">
+              <Icon size={15} className="text-[#78716C]" strokeWidth={1.75} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-[#1C1917]">{label}</p>
+              <p className="text-xs text-[#78716C] mt-0.5">{sub}</p>
+            </div>
+            <ChevronRight size={15} className="text-[#A8A29E]" strokeWidth={1.75} />
+          </button>
+        ))}
       </div>
-
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { Plus, Pencil, Trash2, Search, X, GraduationCap } from 'lucide-react'
 import { getStudents, createStudent, updateStudent, deleteStudent } from '../lib/studentsApi'
 import { getGroups } from '../lib/groupsApi'
 import Loading from '../components/Loading'
@@ -7,17 +7,12 @@ import ConfirmModal from '../components/ConfirmModal'
 import StudentModal from '../components/StudentModal'
 
 export default function StudentsPage() {
-  const { user } = useAuth()
-
   const [students, setStudents] = useState([])
   const [groups,   setGroups]   = useState([])
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState('')
+  const [search,   setSearch]   = useState('')
 
-  // Qidiruv matni
-  const [search, setSearch] = useState('')
-
-  // Modal holatlari
   const [showModal,      setShowModal]      = useState(false)
   const [editingStudent, setEditingStudent] = useState(null)
   const [deleteTarget,   setDeleteTarget]   = useState(null)
@@ -25,11 +20,7 @@ export default function StudentsPage() {
   async function loadData() {
     try {
       setError('')
-      // O'quvchilar va guruhlarni bir vaqtda yuklaymiz
-      const [studentsData, groupsData] = await Promise.all([
-        getStudents(),
-        getGroups(),
-      ])
+      const [studentsData, groupsData] = await Promise.all([getStudents(), getGroups()])
       setStudents(studentsData)
       setGroups(groupsData)
     } catch {
@@ -42,7 +33,6 @@ export default function StudentsPage() {
   useEffect(() => { loadData() }, [])
 
   // Real vaqtda qidiruv — ism, telefon yoki guruh nomi bo'yicha
-  // useMemo — har safar qidiruv matnini o'zgarganda qayta hisoblaydi
   const filteredStudents = useMemo(() => {
     const q = search.toLowerCase().trim()
     if (!q) return students
@@ -73,129 +63,119 @@ export default function StudentsPage() {
     }
   }
 
-  function openAddModal()          { setEditingStudent(null); setShowModal(true) }
-  function openEditModal(student)  { setEditingStudent(student); setShowModal(true) }
-  function closeModal()            { setShowModal(false); setEditingStudent(null) }
+  function openAddModal()         { setEditingStudent(null);    setShowModal(true) }
+  function openEditModal(student) { setEditingStudent(student); setShowModal(true) }
+  function closeModal()           { setShowModal(false);        setEditingStudent(null) }
 
-  if (loading) return <Loading text="O'quvchilar yuklanmoqda..." />
+  if (loading) return <Loading text="Yuklanmoqda..." />
 
   return (
     <div>
-      {/* Sarlavha va qo'shish tugmasi */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Sarlavha */}
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">O'quvchilar</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{students.length} ta o'quvchi</p>
+          <h1 className="text-lg font-semibold text-[#1C1917]">O'quvchilar</h1>
+          <p className="text-sm text-[#78716C] mt-0.5">{students.length} ta o'quvchi</p>
         </div>
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-2 bg-[#2563EB] text-white text-sm font-medium hover:bg-[#1D4ED8] transition-colors rounded"
         >
-          <span className="text-lg">+</span>
-          <span className="hidden sm:inline">Yangi o'quvchi</span>
+          <Plus size={15} strokeWidth={2} />
+          <span>Yangi o'quvchi</span>
         </button>
       </div>
 
-      {/* Xatolik */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">
+        <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-4 text-sm">
           {error}
         </div>
       )}
 
-      {/* Qidiruv qutisi */}
+      {/* Qidiruv */}
       <div className="relative mb-4">
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E]" strokeWidth={1.75} />
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Ism, telefon yoki guruh bo'yicha qidirish..."
-          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-white"
+          className="w-full pl-9 pr-8 py-2.5 border border-[#E7E5E4] rounded bg-white text-sm text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent transition"
         />
-        {/* Qidiruv matnini tozalash */}
         {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            ✕
+          <button onClick={() => setSearch('')}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A8A29E] hover:text-[#78716C] w-5 h-5 flex items-center justify-center">
+            <X size={13} strokeWidth={1.75} />
           </button>
         )}
       </div>
 
-      {/* Bo'sh holat — hech qanday o'quvchi yo'q */}
+      {/* Bo'sh holat */}
       {students.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-          <div className="text-5xl mb-3">🎓</div>
-          <p className="text-gray-500 mb-4">Hali o'quvchi qo'shilmagan</p>
-          <button
-            onClick={openAddModal}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-          >
-            Birinchi o'quvchini qo'shish
+        <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-14 px-6">
+          <div className="w-10 h-10 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg flex items-center justify-center mx-auto mb-3">
+            <GraduationCap size={18} className="text-[#A8A29E]" strokeWidth={1.5} />
+          </div>
+          <p className="text-sm font-medium text-[#1C1917] mb-1">O'quvchilar yo'q</p>
+          <p className="text-sm text-[#78716C] mb-4">Birinchi o'quvchini qo'shing</p>
+          <button onClick={openAddModal}
+            className="px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded hover:bg-[#1D4ED8] transition-colors">
+            O'quvchi qo'shish
           </button>
         </div>
 
-      /* Qidiruv natijasi bo'sh */
       ) : filteredStudents.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-          <div className="text-4xl mb-2">🔍</div>
-          <p className="text-gray-500">"{search}" bo'yicha hech narsa topilmadi</p>
+        <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-12 px-6">
+          <p className="text-sm text-[#78716C]">
+            <span className="font-medium text-[#1C1917]">"{search}"</span> bo'yicha hech narsa topilmadi
+          </p>
         </div>
 
       ) : (
-        /* O'quvchilar jadvali */
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
-          {/* Katta ekranda jadval ko'rinishi */}
-          <div className="hidden sm:block overflow-x-auto">
+        <>
+          {/* Katta ekran — jadval */}
+          <div className="hidden sm:block bg-white border border-[#E7E5E4] rounded-lg overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-left">
-                  <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">#</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Ism</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Telefon</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Guruh</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">Amal</th>
+                <tr className="border-b border-[#E7E5E4] bg-[#FAFAF9]">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#78716C] uppercase tracking-wide w-10">#</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#78716C] uppercase tracking-wide">Ism</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#78716C] uppercase tracking-wide">Telefon</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#78716C] uppercase tracking-wide">Guruh</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[#78716C] uppercase tracking-wide">Amal</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-[#E7E5E4]">
                 {filteredStudents.map((student, index) => (
-                  <tr key={student.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3.5 text-sm text-gray-400">{index + 1}</td>
-                    <td className="px-5 py-3.5">
+                  <tr key={student.id} className="hover:bg-[#FAFAF9] transition-colors">
+                    <td className="px-4 py-3 text-sm text-[#A8A29E] tabular-nums">{index + 1}</td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        {/* Avatar */}
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 text-sm font-semibold shrink-0">
+                        <div className="w-7 h-7 bg-[#F5F5F4] border border-[#E7E5E4] rounded-full flex items-center justify-center text-xs font-semibold text-[#78716C] shrink-0">
                           {student.ism?.charAt(0)?.toUpperCase() ?? '?'}
                         </div>
-                        <span className="text-sm font-medium text-gray-800">{student.ism}</span>
+                        <span className="text-sm font-medium text-[#1C1917]">{student.ism}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-sm text-gray-500">
-                      {student.telefon_raqami ?? '—'}
+                    <td className="px-4 py-3 text-sm text-[#78716C]">
+                      {student.telefon_raqami ?? <span className="text-[#D4D4D0]">—</span>}
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 py-3">
                       {student.groups ? (
-                        <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-medium">
+                        <span className="text-xs bg-[#EFF6FF] text-[#2563EB] px-2 py-0.5 rounded font-medium">
                           {student.groups.nomi}
                         </span>
-                      ) : '—'}
+                      ) : <span className="text-[#D4D4D0] text-sm">—</span>}
                     </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => openEditModal(student)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 hover:bg-blue-50 hover:text-blue-600 transition-colors text-gray-500 text-sm"
-                        >
-                          ✏️
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 justify-end">
+                        <button onClick={() => openEditModal(student)}
+                          className="w-7 h-7 flex items-center justify-center rounded text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917] transition-colors">
+                          <Pencil size={13} strokeWidth={1.75} />
                         </button>
-                        <button
-                          onClick={() => setDeleteTarget(student)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-colors text-gray-500 text-sm"
-                        >
-                          🗑️
+                        <button onClick={() => setDeleteTarget(student)}
+                          className="w-7 h-7 flex items-center justify-center rounded text-[#78716C] hover:bg-[#FEF2F2] hover:text-[#DC2626] transition-colors">
+                          <Trash2 size={13} strokeWidth={1.75} />
                         </button>
                       </div>
                     </td>
@@ -205,51 +185,45 @@ export default function StudentsPage() {
             </table>
           </div>
 
-          {/* Telefon ekranida kartochka ko'rinishi */}
-          <div className="sm:hidden divide-y divide-gray-50">
-            {filteredStudents.map(student => (
-              <div key={student.id} className="flex items-center gap-3 px-4 py-3.5">
-                {/* Avatar */}
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold shrink-0">
+          {/* Telefon — ro'yxat */}
+          <div className="sm:hidden bg-white border border-[#E7E5E4] rounded-lg divide-y divide-[#E7E5E4]">
+            {filteredStudents.map((student, i) => (
+              <div key={student.id}
+                className={`flex items-center gap-3 px-4 py-3
+                  ${i === 0 ? 'rounded-t-lg' : ''} ${i === filteredStudents.length - 1 ? 'rounded-b-lg' : ''}`}
+              >
+                <div className="w-8 h-8 bg-[#F5F5F4] border border-[#E7E5E4] rounded-full flex items-center justify-center text-xs font-semibold text-[#78716C] shrink-0">
                   {student.ism?.charAt(0)?.toUpperCase() ?? '?'}
                 </div>
-                {/* Ma'lumotlar */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 text-sm truncate">{student.ism}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-sm font-medium text-[#1C1917] truncate">{student.ism}</p>
+                  <p className="text-xs text-[#78716C] mt-0.5">
                     {student.groups?.nomi ?? '—'}
                     {student.telefon_raqami && ` · ${student.telefon_raqami}`}
                   </p>
                 </div>
-                {/* Amallar */}
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => openEditModal(student)}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors"
-                  >
-                    ✏️
+                <div className="flex gap-1 shrink-0">
+                  <button onClick={() => openEditModal(student)}
+                    className="w-8 h-8 flex items-center justify-center rounded text-[#78716C] hover:bg-[#F5F5F4] transition-colors">
+                    <Pencil size={13} strokeWidth={1.75} />
                   </button>
-                  <button
-                    onClick={() => setDeleteTarget(student)}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-red-50 transition-colors"
-                  >
-                    🗑️
+                  <button onClick={() => setDeleteTarget(student)}
+                    className="w-8 h-8 flex items-center justify-center rounded text-[#78716C] hover:bg-[#FEF2F2] hover:text-[#DC2626] transition-colors">
+                    <Trash2 size={13} strokeWidth={1.75} />
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Jami natijalar soni */}
           {search && (
-            <div className="px-5 py-3 border-t border-gray-50 bg-gray-50 text-xs text-gray-500">
-              {filteredStudents.length} ta natija topildi
-            </div>
+            <p className="text-xs text-[#A8A29E] mt-2 px-1">
+              {filteredStudents.length} ta natija
+            </p>
           )}
-        </div>
+        </>
       )}
 
-      {/* O'quvchi qo'shish/tahrirlash modali */}
       {showModal && (
         <StudentModal
           student={editingStudent}
@@ -258,8 +232,6 @@ export default function StudentsPage() {
           onClose={closeModal}
         />
       )}
-
-      {/* O'chirish tasdiqlash */}
       {deleteTarget && (
         <ConfirmModal
           message={`"${deleteTarget.ism}" ni o'quvchilar ro'yxatidan o'chirmoqchimisiz?`}
@@ -267,7 +239,6 @@ export default function StudentsPage() {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
-
     </div>
   )
 }
