@@ -8,6 +8,8 @@ import DashboardPage   from './pages/DashboardPage'
 import GroupsPage      from './pages/GroupsPage'
 import GroupDetailPage from './pages/GroupDetailPage'
 import StudentsPage    from './pages/StudentsPage'
+import AttendancePage  from './pages/AttendancePage'
+import ReportsPage     from './pages/ReportsPage'
 
 export default function App() {
   return (
@@ -50,6 +52,24 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Layout><StudentsPage /></Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute>
+                <Layout><AttendancePage /></Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Layout><ReportsPage /></Layout>
               </ProtectedRoute>
             }
           />

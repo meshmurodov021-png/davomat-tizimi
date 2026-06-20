@@ -1,11 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, GraduationCap, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, GraduationCap, ClipboardList, BarChart3, LogOut } from 'lucide-react'
 import { logout } from '../lib/authApi'
 
 const navLinks = [
-  { to: '/dashboard', label: 'Bosh sahifa', Icon: LayoutDashboard },
-  { to: '/groups',    label: 'Guruhlar',    Icon: Users },
-  { to: '/students',  label: "O'quvchilar", Icon: GraduationCap },
+  { to: '/dashboard',  label: 'Bosh sahifa', Icon: LayoutDashboard },
+  { to: '/groups',     label: 'Guruhlar',    Icon: Users },
+  { to: '/students',   label: "O'quvchilar", Icon: GraduationCap },
+  { to: '/attendance', label: 'Davomat',     Icon: ClipboardList },
+  { to: '/reports',    label: 'Hisobotlar',  Icon: BarChart3 },
 ]
 
 export default function Layout({ children }) {
