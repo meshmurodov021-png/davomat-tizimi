@@ -81,8 +81,8 @@ export default function QRModal({ student, onClose }) {
               ref={canvasRef}
               value={student.id}   // O'quvchi UUID si — skanerlanganda shu ID qaytadi
               size={220}
-              level="H"            // H = eng yuqori xato tuzatish darajasi
-              marginSize={2}
+              level="M"            // M = o'rtacha (H dan kam zich, kamera osonroq o'qiydi)
+              marginSize={3}       // yon bo'shliq — skanerlashni osonlashtiradi
             />
           </div>
 

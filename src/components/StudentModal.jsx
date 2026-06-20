@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import PhoneInput from './PhoneInput'
+import { isValidPhone } from '../lib/phoneUtils'
 
 const inputClass = "w-full px-3 py-2.5 border border-[#E7E5E4] rounded bg-white text-sm text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent transition"
 
@@ -27,12 +29,20 @@ export default function StudentModal({ student, groups, lockedGroup, onSave, onC
     e.preventDefault()
     if (!ism.trim())    { setError("Ism kiritilishi shart.");   return }
     if (!selectedGroup) { setError("Guruh tanlanishi shart."); return }
+
+    // Telefon raqami kiritilgan bo'lsa — formatni tekshiramiz
+    if (telefon && !isValidPhone(telefon)) {
+      setError("Telefon raqami to'g'ri formatda emas. Masalan: +998 90 123 45 67")
+      return
+    }
+
     setError('')
     setSaving(true)
     try {
       await onSave({
         ism:            ism.trim(),
-        telefon_raqami: telefon.trim() || null,
+        // Bazaga bo'shliqsiz saqlash: "+998901234567"
+        telefon_raqami: telefon || null,
         group_id:       selectedGroup,
       })
       onClose()
@@ -72,13 +82,12 @@ export default function StudentModal({ student, groups, lockedGroup, onSave, onC
           </Field>
 
           <Field label="Telefon raqami">
-            <input type="tel" value={telefon} onChange={e => setTelefon(e.target.value)}
-              placeholder="+998 90 123 45 67" className={inputClass} />
+            <PhoneInput value={telefon} onChange={setTelefon} />
+            <p className="text-xs text-[#A8A29E] mt-1">Ixtiyoriy · +998 XX XXX XX XX formatida</p>
           </Field>
 
           <Field label="Guruh" required>
             {lockedGroup ? (
-              // Guruh o'zgartirib bo'lmaydi — faqat ko'rsatiladi
               <div className="w-full px-3 py-2.5 border border-[#E7E5E4] rounded bg-[#F5F5F4] text-sm text-[#78716C] flex items-center justify-between">
                 <span className="text-[#1C1917] font-medium">{lockedGroup.nomi}</span>
                 <span className="text-xs text-[#A8A29E]">avtomatik</span>

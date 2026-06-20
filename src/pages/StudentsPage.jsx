@@ -1,11 +1,13 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Plus, Pencil, Trash2, Search, X, GraduationCap, QrCode } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, X, GraduationCap, QrCode, ScanFace } from 'lucide-react'
+import { formatPhoneDisplay } from '../lib/phoneUtils'
 import { getStudents, createStudent, updateStudent, deleteStudent } from '../lib/studentsApi'
 import { getGroups } from '../lib/groupsApi'
 import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
 import StudentModal from '../components/StudentModal'
 import QRModal from '../components/QRModal'
+import FaceEnrollModal from '../components/FaceEnrollModal'
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([])
@@ -18,6 +20,7 @@ export default function StudentsPage() {
   const [editingStudent, setEditingStudent] = useState(null)
   const [deleteTarget,   setDeleteTarget]   = useState(null)
   const [qrStudent,      setQrStudent]      = useState(null)  // QR modal uchun
+  const [faceStudent,    setFaceStudent]    = useState(null)  // Face enroll modal uchun
 
   async function loadData() {
     try {
@@ -152,15 +155,20 @@ export default function StudentsPage() {
                   <tr key={student.id} className="hover:bg-[#FAFAF9] transition-colors">
                     <td className="px-4 py-3 text-sm text-[#A8A29E] tabular-nums">{index + 1}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 bg-[#F5F5F4] border border-[#E7E5E4] rounded-full flex items-center justify-center text-xs font-semibold text-[#78716C] shrink-0">
-                          {student.ism?.charAt(0)?.toUpperCase() ?? '?'}
+                        <div className="flex items-center gap-2.5">
+                        <div className="relative shrink-0">
+                          <div className="w-7 h-7 bg-[#F5F5F4] border border-[#E7E5E4] rounded-full flex items-center justify-center text-xs font-semibold text-[#78716C]">
+                            {student.ism?.charAt(0)?.toUpperCase() ?? '?'}
+                          </div>
+                          {student.face_descriptor && (
+                            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#16A34A] border-2 border-white rounded-full" title="Yuz ro'yxatdan o'tgan" />
+                          )}
                         </div>
                         <span className="text-sm font-medium text-[#1C1917]">{student.ism}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#78716C]">
-                      {student.telefon_raqami ?? <span className="text-[#D4D4D0]">—</span>}
+                    <td className="px-4 py-3 text-sm text-[#78716C] tabular-nums">
+                      {formatPhoneDisplay(student.telefon_raqami) ?? <span className="text-[#D4D4D0]">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       {student.groups ? (
@@ -171,6 +179,14 @@ export default function StudentsPage() {
                     </td>
                     <td className="px-4 py-3">
                         <div className="flex gap-1 justify-end">
+                        <button onClick={() => setFaceStudent(student)}
+                          className={`w-7 h-7 flex items-center justify-center rounded transition-colors
+                            ${student.face_descriptor
+                              ? 'text-[#16A34A] hover:bg-[#F0FDF4]'
+                              : 'text-[#78716C] hover:bg-[#F5F5F4]'}`}
+                          title={student.face_descriptor ? "Yuz ro'yxatdan o'tgan — yangilash" : "Yuzni ro'yxatdan o'tkazish"}>
+                          <ScanFace size={13} strokeWidth={1.75} />
+                        </button>
                         <button onClick={() => setQrStudent(student)}
                           className="w-7 h-7 flex items-center justify-center rounded text-[#78716C] hover:bg-[#EFF6FF] hover:text-[#2563EB] transition-colors" title="QR kod">
                           <QrCode size={13} strokeWidth={1.75} />
@@ -205,10 +221,15 @@ export default function StudentsPage() {
                   <p className="text-sm font-medium text-[#1C1917] truncate">{student.ism}</p>
                   <p className="text-xs text-[#78716C] mt-0.5">
                     {student.groups?.nomi ?? '—'}
-                    {student.telefon_raqami && ` · ${student.telefon_raqami}`}
+                    {student.telefon_raqami && ` · ${formatPhoneDisplay(student.telefon_raqami)}`}
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  <button onClick={() => setFaceStudent(student)}
+                    className={`w-8 h-8 flex items-center justify-center rounded transition-colors
+                      ${student.face_descriptor ? 'text-[#16A34A] hover:bg-[#F0FDF4]' : 'text-[#78716C] hover:bg-[#F5F5F4]'}`}>
+                    <ScanFace size={13} strokeWidth={1.75} />
+                  </button>
                   <button onClick={() => setQrStudent(student)}
                     className="w-8 h-8 flex items-center justify-center rounded text-[#78716C] hover:bg-[#EFF6FF] hover:text-[#2563EB] transition-colors">
                     <QrCode size={13} strokeWidth={1.75} />
@@ -234,6 +255,13 @@ export default function StudentsPage() {
         </>
       )}
 
+      {faceStudent && (
+        <FaceEnrollModal
+          student={faceStudent}
+          onClose={() => setFaceStudent(null)}
+          onSaved={loadData}
+        />
+      )}
       {qrStudent && (
         <QRModal student={qrStudent} onClose={() => setQrStudent(null)} />
       )}

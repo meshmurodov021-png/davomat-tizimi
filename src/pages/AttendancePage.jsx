@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Check, Clock, X, CheckCircle2, BookOpen, QrCode, ClipboardList, History, StopCircle } from 'lucide-react'
+import QRSuccessOverlay from '../components/QRSuccessOverlay'
 import { getGroups } from '../lib/groupsApi'
 import { getStudentsByGroup } from '../lib/studentsApi'
 import { getAttendanceByGroup, saveAttendance } from '../lib/attendanceApi'
@@ -52,9 +53,10 @@ export default function AttendancePage() {
   const [manualError,     setManualError]     = useState('')
 
   // ─── QR skanerlash holatlari ───────────────────────────────────────────────
-  const [qrScanning,  setQrScanning]  = useState(false)   // kamera ochiq/yopiq
-  const [qrResults,   setQrResults]   = useState([])      // oxirgi skanerlashlar ro'yxati
-  const [qrError,     setQrError]     = useState('')
+  const [qrScanning,   setQrScanning]   = useState(false)
+  const [qrResults,    setQrResults]    = useState([])
+  const [qrError,      setQrError]      = useState('')
+  const [successPopup, setSuccessPopup] = useState(null)  // { name, tugriKun }
 
   // ─── Loglar holatlari ──────────────────────────────────────────────────────
   const [logs,        setLogs]        = useState([])
@@ -152,7 +154,10 @@ export default function AttendancePage() {
       // Davomatni saqlaymiz
       await saveQRAttendance(student.id, tugriKun)
 
-      // Natijani ekranda ko'rsatamiz
+      // Portlash animatsiyasini ko'rsatamiz
+      setSuccessPopup({ name: student.ism, tugriKun })
+
+      // Ro'yxatga ham qo'shamiz
       const newEntry = {
         id:       Date.now(),
         ism:      student.ism,
@@ -160,7 +165,7 @@ export default function AttendancePage() {
         tugriKun,
         vaqt:     getCurrentTime(),
       }
-      setQrResults(prev => [newEntry, ...prev.slice(0, 19)]) // oxirgi 20 ta
+      setQrResults(prev => [newEntry, ...prev.slice(0, 19)])
 
     } catch {
       setQrError("QR kod tanilmadi yoki o'quvchi topilmadi.")
@@ -181,8 +186,6 @@ export default function AttendancePage() {
   const markedCount = students.filter(s => attendance[s.id]).length
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
-  if (loadingGroups) return <Loading text="Yuklanmoqda..." />
-
   const tabClass = (key) =>
     `flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded transition-colors
     ${mode === key
@@ -191,6 +194,16 @@ export default function AttendancePage() {
 
   return (
     <div>
+
+      {/* QR skanerlash muvaffaqiyat animatsiyasi — butun ekranni qoplaydi */}
+      {successPopup && (
+        <QRSuccessOverlay
+          name={successPopup.name}
+          tugriKun={successPopup.tugriKun}
+          onDone={() => setSuccessPopup(null)}
+        />
+      )}
+
       {/* Sarlavha */}
       <div className="mb-5">
         <h1 className="text-lg font-semibold text-[#1C1917]">Davomat belgilash</h1>
@@ -218,6 +231,11 @@ export default function AttendancePage() {
           ══════════════════════════════════════════════════════════════════ */}
       {mode === 'manual' && (
         <>
+          {/* Guruhlar yuklanayotganda faqat shu bo'limda spinner chiqadi */}
+          {loadingGroups ? (
+            <Loading text="Guruhlar yuklanmoqda..." />
+          ) : <>
+
           {manualError && !successMsg && (
             <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-4 text-sm">
               {manualError}
@@ -333,6 +351,8 @@ export default function AttendancePage() {
               )}
             </>
           )}
+
+          </> /* loadingGroups else yopilishi */}
         </>
       )}
 

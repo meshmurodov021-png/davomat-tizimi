@@ -1,66 +1,88 @@
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
-import { CheckCircle2, AlertCircle, Loader2, VideoOff } from 'lucide-react'
+import { Loader2, VideoOff } from 'lucide-react'
 
-// Kamera ekrandagi QR kodni aniqlab, onScan(text) ni chaqiradi
-// onScan: skanerlangan UUID string ni qabul qiladi
-// Bir xil QR kod ketma-ket skanerlanmasin deb COOLDOWN_MS interval ishlatiladi
 const SCANNER_DIV_ID = 'qr-camera-view'
-const COOLDOWN_MS    = 2500  // muvaffaqiyatli skanerlashdan so'ng pauza (ms)
+const COOLDOWN_MS    = 2500
 
 export default function QRScanner({ onScan }) {
-  const scannerRef   = useRef(null)   // Html5Qrcode instance
-  const lastScanRef  = useRef(0)      // oxirgi muvaffaqiyatli skanerlash vaqti
+  const scannerRef  = useRef(null)
+  const lastScanRef = useRef(0)
+  const startedRef  = useRef(false)   // ikki marta ishga tushishni oldini olish
 
-  const [status, setStatus]         = useState('starting')  // starting | ready | error
+  const [status,      setStatus]      = useState('starting')
   const [cameraError, setCameraError] = useState('')
 
-  // Kamerani yoqish
   useEffect(() => {
-    // DOM elementini render bo'lishini kutish uchun kichik kechiktirish
-    const timer = setTimeout(startCamera, 150)
-
+    const timer = setTimeout(startCamera, 200)
     return () => {
       clearTimeout(timer)
       stopCamera()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function startCamera() {
-    // Agar allaqachon ishga tushirilgan bo'lsa — qaytadan boshlama
-    if (scannerRef.current) return
+    if (startedRef.current) {
+      console.log('[QRScanner] Allaqachon ishga tushgan, o\'tkazib yuborildi')
+      return
+    }
+    startedRef.current = true
+    console.log('[QRScanner] Kamera ishga tushmoqda...')
 
     try {
       const scanner = new Html5Qrcode(SCANNER_DIV_ID, { verbose: false })
       scannerRef.current = scanner
 
+      // qrbox ni kamera o'lchamiga nisbatan foizda beramiz (55%) —
+      // kichikroq zona — tezroq va aniqroq skanerlaydi
+      const qrboxFunction = (w, h) => {
+        const side = Math.floor(Math.min(w, h) * 0.55)
+        console.log(`[QRScanner] Skanerlash zonasi: ${side}×${side} px (kamera: ${w}×${h})`)
+        return { width: side, height: side }
+      }
+
       await scanner.start(
-        { facingMode: 'environment' },   // orqa kamera
+        { facingMode: 'environment' },
         {
-          fps: 10,
-          qrbox: { width: 240, height: 240 },
+          fps: 15,        // sekundiga kadr soni (oshirildi: 10→15)
+          qrbox: qrboxFunction,
+          aspectRatio: 1.0,
         },
         (decodedText) => {
-          // Cooldown tekshiruvi — bir xil QR qayta-qayta skanerlanmasin
+          console.log('[QRScanner] QR topildi:', decodedText)
           const now = Date.now()
-          if (now - lastScanRef.current < COOLDOWN_MS) return
+          if (now - lastScanRef.current < COOLDOWN_MS) {
+            console.log('[QRScanner] Cooldown davom etmoqda, o\'tkazib yuborildi')
+            return
+          }
           lastScanRef.current = now
           onScan(decodedText)
         },
-        () => {
-          // Har kadrda QR topilmasa bu chaqiriladi — odatiy holat, e'tibor bermaylik
+        (err) => {
+          // Har kadrda QR topilmasa bu chaqiriladi — odatiy holat
+          // Faqat "jiddiy" xatolarni loglaymiz
+          if (err && !err.toString().includes('No MultiFormat')) {
+            // silent
+          }
         }
       )
 
+      console.log('[QRScanner] Kamera muvaffaqiyatli ochildi, skanerlash boshlandi')
       setStatus('ready')
+
     } catch (err) {
+      startedRef.current = false
       scannerRef.current = null
-      if (err?.message?.toLowerCase().includes('permission')) {
-        setCameraError("Kameraga ruxsat berilmagan. Brauzer manzil satridan ruxsat bering.")
-      } else if (err?.message?.toLowerCase().includes('notfound')) {
-        setCameraError("Kamera topilmadi. Qurilmangizda kamera borligini tekshiring.")
+      console.error('[QRScanner] Kamera xatosi:', err)
+
+      const msg = err?.message ?? String(err)
+      if (msg.toLowerCase().includes('permission') || msg.includes('NotAllowedError')) {
+        setCameraError("Kameraga ruxsat berilmagan. Brauzer manzil satridan 🔒 tugmasini bosib ruxsat bering.")
+      } else if (msg.toLowerCase().includes('notfound') || msg.includes('DevicesNotFoundError')) {
+        setCameraError("Kamera topilmadi. Qurilmangizda orqa kamera borligini tekshiring.")
       } else {
-        setCameraError("Kamera ochilmadi. Sahifani yangilab qaytadan urining.")
+        setCameraError(`Kamera ochilmadi: ${msg}`)
       }
       setStatus('error')
     }
@@ -68,47 +90,57 @@ export default function QRScanner({ onScan }) {
 
   async function stopCamera() {
     if (!scannerRef.current) return
+    console.log('[QRScanner] Kamera to\'xtatilmoqda...')
     try {
-      await scannerRef.current.stop()
+      if (scannerRef.current.isScanning) {
+        await scannerRef.current.stop()
+      }
       scannerRef.current.clear()
-    } catch {
-      // Agar stop xato bersa — e'tibor bermaslik
+    } catch (e) {
+      console.warn('[QRScanner] Stop xatosi (e\'tibor berilmaydi):', e)
     }
     scannerRef.current = null
+    startedRef.current = false
   }
 
   return (
-    <div className="relative">
-      {/* html5-qrcode kamera oynasini shu div ichiga joylaydi */}
-      <div
-        id={SCANNER_DIV_ID}
-        className="w-full rounded-lg overflow-hidden bg-[#0a0a0a]"
-        style={{ minHeight: 280 }}
-      />
+    <div className="relative rounded-lg overflow-hidden bg-black" style={{ minHeight: 260 }}>
 
-      {/* Yuklanmoqda overlay */}
+      {/* html5-qrcode video elementini shu div ichiga joylaydi */}
+      <div id={SCANNER_DIV_ID} className="w-full" />
+
+      {/* Yuklanmoqda */}
       {status === 'starting' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a] rounded-lg gap-2">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black gap-2">
           <Loader2 size={28} className="text-white animate-spin" strokeWidth={1.5} />
           <p className="text-sm text-white/70">Kamera ochilmoqda...</p>
         </div>
       )}
 
-      {/* Xatolik overlay */}
+      {/* Xatolik */}
       {status === 'error' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a] rounded-lg gap-3 p-6 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black gap-3 p-6 text-center">
           <VideoOff size={32} className="text-white/50" strokeWidth={1.5} />
           <p className="text-sm text-white/80 leading-relaxed">{cameraError}</p>
         </div>
       )}
 
-      {/* Tayyor holat — skanerlash ko'rsatkichi (kamera markazida) */}
+      {/* Tayyor — markaziy zona ko'rsatkichi */}
       {status === 'ready' && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div
-            className="border-2 border-white/60 rounded"
-            style={{ width: 240, height: 240 }}
-          />
+          {/* Burchak belgilari */}
+          {[
+            'top-0 left-0 border-t-2 border-l-2',
+            'top-0 right-0 border-t-2 border-r-2',
+            'bottom-0 left-0 border-b-2 border-l-2',
+            'bottom-0 right-0 border-b-2 border-r-2',
+          ].map((cls, i) => (
+            <div key={i} className={`absolute w-6 h-6 border-white/80 rounded-sm ${cls}`}
+              style={{ margin: '20%' }} />
+          ))}
+          <p className="absolute bottom-3 text-xs text-white/60">
+            QR kodni kamera oynasiga tuzing
+          </p>
         </div>
       )}
     </div>
