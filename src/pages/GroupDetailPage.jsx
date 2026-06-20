@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Plus, Pencil, Trash2, Clock, DoorOpen } from 'lucide-react'
+import { ChevronLeft, Plus, Pencil, Trash2, Clock, DoorOpen, QrCode } from 'lucide-react'
 import { getGroupById } from '../lib/groupsApi'
 import { getStudentsByGroup, createStudent, updateStudent, deleteStudent } from '../lib/studentsApi'
 import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
 import StudentModal from '../components/StudentModal'
+import QRModal from '../components/QRModal'
 
 const DAY_SHORT = {
   dushanba: 'Du', seshanba: 'Se', chorshanba: 'Ch',
@@ -25,6 +26,7 @@ export default function GroupDetailPage() {
   const [showModal,      setShowModal]      = useState(false)
   const [editingStudent, setEditingStudent] = useState(null)
   const [deleteTarget,   setDeleteTarget]   = useState(null)
+  const [qrStudent,      setQrStudent]      = useState(null)
 
   async function loadData() {
     try {
@@ -192,6 +194,11 @@ export default function GroupDetailPage() {
 
               {/* Amallar */}
               <div className="flex gap-1 shrink-0">
+                <button onClick={() => setQrStudent({ ...student, groups: { nomi: group?.nomi } })}
+                  className="w-8 h-8 flex items-center justify-center rounded text-[#78716C] hover:bg-[#EFF6FF] hover:text-[#2563EB] transition-colors"
+                  title="QR kod">
+                  <QrCode size={13} strokeWidth={1.75} />
+                </button>
                 <button onClick={() => openEditModal(student)}
                   className="w-8 h-8 flex items-center justify-center rounded text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917] transition-colors"
                   title="Tahrirlash">
@@ -208,6 +215,9 @@ export default function GroupDetailPage() {
         </div>
       )}
 
+      {qrStudent && (
+        <QRModal student={qrStudent} onClose={() => setQrStudent(null)} />
+      )}
       {showModal && (
         <StudentModal
           student={editingStudent}

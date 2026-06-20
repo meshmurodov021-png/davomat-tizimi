@@ -68,7 +68,7 @@ export default function StudentModal({ student, groups, lockedGroup, onSave, onC
 
           <Field label="Ism va familiya" required>
             <input type="text" value={ism} onChange={e => setIsm(e.target.value)}
-              placeholder="Alisher Nazarov" className={inputClass} />
+              placeholder="Alisher Nazarov" autoCapitalize="words" className={inputClass} />
           </Field>
 
           <Field label="Telefon raqami">

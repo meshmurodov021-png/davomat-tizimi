@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Plus, Pencil, Trash2, Search, X, GraduationCap } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, X, GraduationCap, QrCode } from 'lucide-react'
 import { getStudents, createStudent, updateStudent, deleteStudent } from '../lib/studentsApi'
 import { getGroups } from '../lib/groupsApi'
 import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
 import StudentModal from '../components/StudentModal'
+import QRModal from '../components/QRModal'
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([])
@@ -16,6 +17,7 @@ export default function StudentsPage() {
   const [showModal,      setShowModal]      = useState(false)
   const [editingStudent, setEditingStudent] = useState(null)
   const [deleteTarget,   setDeleteTarget]   = useState(null)
+  const [qrStudent,      setQrStudent]      = useState(null)  // QR modal uchun
 
   async function loadData() {
     try {
@@ -168,7 +170,11 @@ export default function StudentsPage() {
                       ) : <span className="text-[#D4D4D0] text-sm">—</span>}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1 justify-end">
+                        <div className="flex gap-1 justify-end">
+                        <button onClick={() => setQrStudent(student)}
+                          className="w-7 h-7 flex items-center justify-center rounded text-[#78716C] hover:bg-[#EFF6FF] hover:text-[#2563EB] transition-colors" title="QR kod">
+                          <QrCode size={13} strokeWidth={1.75} />
+                        </button>
                         <button onClick={() => openEditModal(student)}
                           className="w-7 h-7 flex items-center justify-center rounded text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917] transition-colors">
                           <Pencil size={13} strokeWidth={1.75} />
@@ -203,6 +209,10 @@ export default function StudentsPage() {
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  <button onClick={() => setQrStudent(student)}
+                    className="w-8 h-8 flex items-center justify-center rounded text-[#78716C] hover:bg-[#EFF6FF] hover:text-[#2563EB] transition-colors">
+                    <QrCode size={13} strokeWidth={1.75} />
+                  </button>
                   <button onClick={() => openEditModal(student)}
                     className="w-8 h-8 flex items-center justify-center rounded text-[#78716C] hover:bg-[#F5F5F4] transition-colors">
                     <Pencil size={13} strokeWidth={1.75} />
@@ -224,6 +234,9 @@ export default function StudentsPage() {
         </>
       )}
 
+      {qrStudent && (
+        <QRModal student={qrStudent} onClose={() => setQrStudent(null)} />
+      )}
       {showModal && (
         <StudentModal
           student={editingStudent}
