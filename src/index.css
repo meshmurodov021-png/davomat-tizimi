@@ -32,10 +32,16 @@
 .qr-name-up       { animation: qr-name-up 0.35s 0.25s ease both; }
 
 @layer base {
-  html {
+  html, body {
+    height: 100%;
     font-family: 'Inter', system-ui, sans-serif;
     background-color: #FAFAF9;
     color: #1C1917;
+  }
+
+  /* React root ham to'liq balandlikni egallashi kerak */
+  #root {
+    height: 100%;
   }
 
   button, [role="button"] {

@@ -31,12 +31,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center p-4">
+    /* fixed inset-0 — URL satri va quyi panel qanday bo'lishidan qat'i nazar, aniq ko'rinayotgan ekranni to'ldiradi */
+    <div className="fixed inset-0 bg-[#FAFAF9] flex items-center justify-center p-4 overflow-y-auto">
       <div className="w-full max-w-[360px]">
 
         {/* Sarlavha */}
-        <div className="mb-8">
-          <div className="w-8 h-8 bg-[#2563EB] rounded flex items-center justify-center mb-5">
+        <div className="mb-5">
+          <div className="w-8 h-8 bg-[#2563EB] rounded flex items-center justify-center mb-4">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
               <rect x="8" y="1" width="5" height="5" rx="1" fill="white" opacity="0.6" />
@@ -56,7 +57,7 @@ export default function LoginPage() {
         )}
 
         {/* Forma */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-[#1C1917] mb-1.5">
               Email manzil
