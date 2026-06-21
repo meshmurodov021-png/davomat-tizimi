@@ -55,27 +55,6 @@ export async function deleteStudent(id) {
   if (error) throw new Error(error.message)
 }
 
-// Yuzni ro'yxatdan o'tkazish — face_descriptor ni saqlaymiz
-// descriptorJson: serializeDescriptor() tomonidan qaytarilgan JSON string
-export async function updateFaceDescriptor(id, descriptorJson) {
-  const { error } = await supabase
-    .from('students')
-    .update({ face_descriptor: descriptorJson })
-    .eq('id', id)
-
-  if (error) throw new Error(error.message)
-}
-
-// Yuz ro'yxatini o'chirish (qayta olish kerak bo'lsa)
-export async function clearFaceDescriptor(id) {
-  const { error } = await supabase
-    .from('students')
-    .update({ face_descriptor: null })
-    .eq('id', id)
-
-  if (error) throw new Error(error.message)
-}
-
 // Dashboard uchun: faqat o'quvchilar sonini olish
 export async function getStudentsCount() {
   const { count, error } = await supabase

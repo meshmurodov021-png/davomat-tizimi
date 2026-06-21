@@ -8,7 +8,6 @@ import { getStudentById, saveQRAttendance, getWrongDayLogs } from '../lib/qrApi'
 import Loading from '../components/Loading'
 import QRScanner from '../components/QRScanner'
 
-// ── Umumiy yordamchi ma'lumotlar ──────────────────────────────────────────────
 const UZBEK_DAYS  = ['yakshanba','dushanba','seshanba','chorshanba','payshanba','juma','shanba']
 const DAY_LABELS  = { dushanba:'Dushanba', seshanba:'Seshanba', chorshanba:'Chorshanba', payshanba:'Payshanba', juma:'Juma', shanba:'Shanba', yakshanba:'Yakshanba' }
 const MONTH_NAMES = ['yanvar','fevral','mart','aprel','may','iyun','iyul','avgust','sentabr','oktabr','noyabr','dekabr']
@@ -31,16 +30,14 @@ function getCurrentTime() {
   return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`
 }
 
-// ── Asosiy komponent ──────────────────────────────────────────────────────────
 export default function AttendancePage() {
   const today     = new Date()
   const dateStr   = today.toISOString().split('T')[0]
   const todayName = UZBEK_DAYS[today.getDay()]
 
-  // Umumiy
-  const [mode, setMode] = useState('manual')   // 'manual' | 'qr' | 'logs'
+  const [mode, setMode] = useState('manual')  // 'manual' | 'qr' | 'logs'
 
-  // ─── Qo'lda belgilash holatlari ────────────────────────────────────────────
+  // Qo'lda belgilash
   const [todayGroups,     setTodayGroups]     = useState([])
   const [selectedGroup,   setSelectedGroup]   = useState(null)
   const [students,        setStudents]        = useState([])
@@ -52,18 +49,17 @@ export default function AttendancePage() {
   const [successMsg,      setSuccessMsg]      = useState('')
   const [manualError,     setManualError]     = useState('')
 
-  // ─── QR skanerlash holatlari ───────────────────────────────────────────────
+  // QR skanerlash
   const [qrScanning,   setQrScanning]   = useState(false)
   const [qrResults,    setQrResults]    = useState([])
   const [qrError,      setQrError]      = useState('')
-  const [successPopup, setSuccessPopup] = useState(null)  // { name, tugriKun }
+  const [successPopup, setSuccessPopup] = useState(null)
 
-  // ─── Loglar holatlari ──────────────────────────────────────────────────────
+  // Loglar
   const [logs,        setLogs]        = useState([])
   const [loadingLogs, setLoadingLogs] = useState(false)
   const [logsError,   setLogsError]   = useState('')
 
-  // Sahifa ochilganda guruhlarni yuklaymiz
   useEffect(() => {
     async function load() {
       try {
@@ -77,16 +73,14 @@ export default function AttendancePage() {
     load()
   }, [])
 
-  // Guruh o'zgarganda — o'quvchilar va mavjud davomatni yuklaymiz
   useEffect(() => {
     if (!selectedGroup) return
     loadStudentsAndAttendance()
   }, [selectedGroup])
 
-  // Loglar tabiga o'tilganda yuklaymiz
   useEffect(() => {
     if (mode !== 'logs') return
-    if (logs.length > 0) return  // allaqachon yuklangan
+    if (logs.length > 0) return
     loadLogs()
   }, [mode])
 
@@ -139,41 +133,24 @@ export default function AttendancePage() {
     finally  { setSaving(false) }
   }
 
-  // ── QR skanerlash ──────────────────────────────────────────────────────────
-  // Har bir muvaffaqiyatli skanerlashda chaqiriladi
   const handleQRScan = useCallback(async (rawText) => {
     setQrError('')
     try {
-      // O'quvchini UUID bo'yicha bazadan topamiz
-      const student = await getStudentById(rawText)
-
-      // Bugun to'g'ri kun ekanligini tekshiramiz
-      const grupDays  = student.groups?.group_days ?? []
-      const tugriKun  = grupDays.some(d => d.kun === todayName)
-
-      // Davomatni saqlaymiz
+      const student  = await getStudentById(rawText)
+      const grupDays = student.groups?.group_days ?? []
+      const tugriKun = grupDays.some(d => d.kun === todayName)
       await saveQRAttendance(student.id, tugriKun)
-
-      // Portlash animatsiyasini ko'rsatamiz
       setSuccessPopup({ name: student.ism, tugriKun })
-
-      // Ro'yxatga ham qo'shamiz
-      const newEntry = {
-        id:       Date.now(),
-        ism:      student.ism,
-        group:    student.groups?.nomi ?? '',
-        tugriKun,
-        vaqt:     getCurrentTime(),
-      }
-      setQrResults(prev => [newEntry, ...prev.slice(0, 19)])
-
+      setQrResults(prev => [{
+        id: Date.now(), ism: student.ism,
+        group: student.groups?.nomi ?? '', tugriKun, vaqt: getCurrentTime(),
+      }, ...prev.slice(0, 19)])
     } catch {
       setQrError("QR kod tanilmadi yoki o'quvchi topilmadi.")
       setTimeout(() => setQrError(''), 3000)
     }
   }, [todayName])
 
-  // Loglarni yuklash
   async function loadLogs() {
     setLoadingLogs(true)
     setLogsError('')
@@ -185,7 +162,6 @@ export default function AttendancePage() {
 
   const markedCount = students.filter(s => attendance[s.id]).length
 
-  // ── RENDER ──────────────────────────────────────────────────────────────────
   const tabClass = (key) =>
     `flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded transition-colors
     ${mode === key
@@ -195,7 +171,6 @@ export default function AttendancePage() {
   return (
     <div>
 
-      {/* QR skanerlash muvaffaqiyat animatsiyasi — butun ekranni qoplaydi */}
       {successPopup && (
         <QRSuccessOverlay
           name={successPopup.name}
@@ -204,13 +179,12 @@ export default function AttendancePage() {
         />
       )}
 
-      {/* Sarlavha */}
       <div className="mb-5">
         <h1 className="text-lg font-semibold text-[#1C1917]">Davomat belgilash</h1>
         <p className="text-sm text-[#78716C] mt-0.5">{formatToday(today)}</p>
       </div>
 
-      {/* Rejim tanlash tablar */}
+      {/* Tablar */}
       <div className="flex gap-2 mb-5">
         <button onClick={() => setMode('manual')} className={tabClass('manual')}>
           <ClipboardList size={13} strokeWidth={1.75} />
@@ -226,172 +200,136 @@ export default function AttendancePage() {
         </button>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          1. QO'LDA BELGILASH
-          ══════════════════════════════════════════════════════════════════ */}
+      {/* ══ 1. QO'LDA ══ */}
       {mode === 'manual' && (
         <>
-          {/* Guruhlar yuklanayotganda faqat shu bo'limda spinner chiqadi */}
           {loadingGroups ? (
             <Loading text="Guruhlar yuklanmoqda..." />
           ) : <>
-
-          {manualError && !successMsg && (
-            <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-4 text-sm">
-              {manualError}
-            </div>
-          )}
-          {successMsg && (
-            <div className="bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] rounded px-3.5 py-2.5 mb-4 text-sm flex items-center gap-2">
-              <CheckCircle2 size={15} strokeWidth={1.75} />
-              {successMsg}
-            </div>
-          )}
-
-          {todayGroups.length === 0 ? (
-            <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-14 px-6">
-              <div className="w-10 h-10 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg flex items-center justify-center mx-auto mb-3">
-                <BookOpen size={18} className="text-[#A8A29E]" strokeWidth={1.5} />
+            {manualError && !successMsg && (
+              <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-4 text-sm">{manualError}</div>
+            )}
+            {successMsg && (
+              <div className="bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] rounded px-3.5 py-2.5 mb-4 text-sm flex items-center gap-2">
+                <CheckCircle2 size={15} strokeWidth={1.75} />{successMsg}
               </div>
-              <p className="text-sm font-medium text-[#1C1917] mb-1">Bugun dars yo'q</p>
-              <p className="text-sm text-[#78716C]">{DAY_LABELS[todayName]} kuni uchun hech qaysi guruhda dars belgilanmagan.</p>
-            </div>
-          ) : (
-            <>
-              {/* Guruh tablar */}
-              {todayGroups.length > 1 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {todayGroups.map(g => (
-                    <button
-                      key={g.id}
-                      onClick={() => setSelectedGroup(g)}
-                      className={`px-3 py-1.5 text-sm font-medium border rounded transition-colors
-                        ${selectedGroup?.id === g.id
-                          ? 'bg-[#2563EB] border-[#2563EB] text-white'
-                          : 'bg-white border-[#E7E5E4] text-[#78716C] hover:border-[#2563EB]/40'}`}
-                    >
-                      {g.nomi}
-                    </button>
-                  ))}
-                </div>
-              )}
+            )}
 
-              {!selectedGroup ? (
-                <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-10">
-                  <p className="text-sm text-[#78716C]">Guruhni tanlang</p>
+            {todayGroups.length === 0 ? (
+              <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-14 px-6">
+                <div className="w-10 h-10 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <BookOpen size={18} className="text-[#A8A29E]" strokeWidth={1.5} />
                 </div>
-              ) : loadingStudents ? (
-                <Loading text="O'quvchilar yuklanmoqda..." />
-              ) : students.length === 0 ? (
-                <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-10">
-                  <p className="text-sm font-medium text-[#1C1917] mb-1">Bu guruhda o'quvchi yo'q</p>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-[#78716C]">
-                      <span className="font-medium text-[#1C1917]">{selectedGroup.nomi}</span>
-                      &nbsp;·&nbsp;{markedCount}/{students.length} belgilandi
-                      {hasExisting && <span className="text-[#2563EB] ml-2">· Saqlangan</span>}
-                    </p>
-                    <button
-                      onClick={() => markAll('keldi')}
-                      className="px-2.5 py-1 text-xs font-medium border border-[#16A34A] text-[#16A34A] bg-[#F0FDF4] hover:bg-[#DCFCE7] rounded transition-colors"
-                    >
-                      Hammasi keldi
-                    </button>
+                <p className="text-sm font-medium text-[#1C1917] mb-1">Bugun dars yo'q</p>
+                <p className="text-sm text-[#78716C]">{DAY_LABELS[todayName]} kuni uchun hech qaysi guruhda dars belgilanmagan.</p>
+              </div>
+            ) : (
+              <>
+                {todayGroups.length > 1 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {todayGroups.map(g => (
+                      <button key={g.id} onClick={() => setSelectedGroup(g)}
+                        className={`px-3 py-1.5 text-sm font-medium border rounded transition-colors
+                          ${selectedGroup?.id === g.id ? 'bg-[#2563EB] border-[#2563EB] text-white' : 'bg-white border-[#E7E5E4] text-[#78716C] hover:border-[#2563EB]/40'}`}>
+                        {g.nomi}
+                      </button>
+                    ))}
                   </div>
+                )}
 
-                  {/* Progress */}
-                  <div className="h-1 bg-[#E7E5E4] rounded-full mb-3 overflow-hidden">
-                    <div className="h-full bg-[#2563EB] rounded-full transition-all duration-300"
-                      style={{ width: `${students.length > 0 ? (markedCount/students.length)*100 : 0}%` }} />
+                {!selectedGroup ? (
+                  <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-10">
+                    <p className="text-sm text-[#78716C]">Guruhni tanlang</p>
                   </div>
-
-                  {/* O'quvchilar */}
-                  <div className="bg-white border border-[#E7E5E4] rounded-lg divide-y divide-[#E7E5E4] mb-4">
-                    {students.map((student, i) => {
-                      const cur = attendance[student.id] ?? null
-                      return (
-                        <div key={student.id}
-                          className={`flex items-center gap-3 px-4 py-3 transition-colors
-                            ${i===0?'rounded-t-lg':''} ${i===students.length-1?'rounded-b-lg':''}
-                            ${cur==='keldi'?'bg-[#F0FDF4]':cur==='kech_keldi'?'bg-[#FEFCE8]':cur==='kelmadi'?'bg-[#FFF5F5]':''}`}
-                        >
-                          <span className="text-xs text-[#A8A29E] w-5 text-right tabular-nums shrink-0">{i+1}</span>
-                          <div className="w-8 h-8 bg-[#F5F5F4] border border-[#E7E5E4] rounded-full flex items-center justify-center text-xs font-semibold text-[#78716C] shrink-0">
-                            {student.ism?.charAt(0)?.toUpperCase() ?? '?'}
+                ) : loadingStudents ? (
+                  <Loading text="O'quvchilar yuklanmoqda..." />
+                ) : students.length === 0 ? (
+                  <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-10">
+                    <p className="text-sm font-medium text-[#1C1917]">Bu guruhda o'quvchi yo'q</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-[#78716C]">
+                        <span className="font-medium text-[#1C1917]">{selectedGroup.nomi}</span>
+                        &nbsp;·&nbsp;{markedCount}/{students.length} belgilandi
+                        {hasExisting && <span className="text-[#2563EB] ml-2">· Saqlangan</span>}
+                      </p>
+                      <button onClick={() => markAll('keldi')}
+                        className="px-2.5 py-1 text-xs font-medium border border-[#16A34A] text-[#16A34A] bg-[#F0FDF4] hover:bg-[#DCFCE7] rounded transition-colors">
+                        Hammasi keldi
+                      </button>
+                    </div>
+                    <div className="h-1 bg-[#E7E5E4] rounded-full mb-3 overflow-hidden">
+                      <div className="h-full bg-[#2563EB] rounded-full transition-all duration-300"
+                        style={{ width: `${students.length > 0 ? (markedCount/students.length)*100 : 0}%` }} />
+                    </div>
+                    <div className="bg-white border border-[#E7E5E4] rounded-lg divide-y divide-[#E7E5E4] mb-4">
+                      {students.map((student, i) => {
+                        const cur = attendance[student.id] ?? null
+                        return (
+                          <div key={student.id}
+                            className={`flex items-center gap-3 px-4 py-3 transition-colors
+                              ${i===0?'rounded-t-lg':''} ${i===students.length-1?'rounded-b-lg':''}
+                              ${cur==='keldi'?'bg-[#F0FDF4]':cur==='kech_keldi'?'bg-[#FEFCE8]':cur==='kelmadi'?'bg-[#FFF5F5]':''}`}
+                          >
+                            <span className="text-xs text-[#A8A29E] w-5 text-right tabular-nums shrink-0">{i+1}</span>
+                            <div className="w-8 h-8 bg-[#F5F5F4] border border-[#E7E5E4] rounded-full flex items-center justify-center text-xs font-semibold text-[#78716C] shrink-0">
+                              {student.ism?.charAt(0)?.toUpperCase() ?? '?'}
+                            </div>
+                            <p className="flex-1 text-sm font-medium text-[#1C1917] min-w-0 truncate">{student.ism}</p>
+                            <div className="flex gap-1 shrink-0">
+                              {STATUSES.map(({ value, label, Icon, activeClass }) => (
+                                <button key={value} onClick={() => toggleStatus(student.id, value)} title={label}
+                                  className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium border rounded transition-colors
+                                    ${cur === value ? activeClass : 'bg-white border-[#E7E5E4] text-[#78716C] hover:border-[#D4D4D0]'}`}>
+                                  <Icon size={11} strokeWidth={2} />
+                                  <span className="hidden sm:inline">{label}</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          <p className="flex-1 text-sm font-medium text-[#1C1917] min-w-0 truncate">{student.ism}</p>
-                          <div className="flex gap-1 shrink-0">
-                            {STATUSES.map(({ value, label, Icon, activeClass }) => (
-                              <button key={value} onClick={() => toggleStatus(student.id, value)} title={label}
-                                className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium border rounded transition-colors
-                                  ${cur === value ? activeClass : 'bg-white border-[#E7E5E4] text-[#78716C] hover:border-[#D4D4D0]'}`}>
-                                <Icon size={11} strokeWidth={2} />
-                                <span className="hidden sm:inline">{label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Saqlash */}
-                  <div className="sticky bottom-20 md:bottom-6">
-                    <button onClick={handleManualSave} disabled={saving || markedCount === 0}
-                      className="w-full py-3 bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition-colors rounded disabled:opacity-40 shadow-lg">
-                      {saving ? 'Saqlanmoqda...'
-                        : hasExisting ? `Yangilash (${markedCount} ta)`
-                        : `Saqlash (${markedCount} ta)`}
-                    </button>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          </> /* loadingGroups else yopilishi */}
+                        )
+                      })}
+                    </div>
+                    <div className="sticky bottom-20 md:bottom-6">
+                      <button onClick={handleManualSave} disabled={saving || markedCount === 0}
+                        className="w-full py-3 bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition-colors rounded disabled:opacity-40 shadow-lg">
+                        {saving ? 'Saqlanmoqda...' : hasExisting ? `Yangilash (${markedCount} ta)` : `Saqlash (${markedCount} ta)`}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </>}
         </>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════════
-          2. QR SKANERLASH
-          ══════════════════════════════════════════════════════════════════ */}
+      {/* ══ 2. QR SKANERLASH ══ */}
       {mode === 'qr' && (
         <div>
-          {/* Kamera boshqaruv */}
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-[#78716C] uppercase tracking-wider">
-              Kamera
-            </p>
+            <p className="text-xs font-semibold text-[#78716C] uppercase tracking-wider">Kamera</p>
             {qrScanning ? (
-              <button
-                onClick={() => setQrScanning(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E7E5E4] text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2] rounded transition-colors"
-              >
+              <button onClick={() => setQrScanning(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E7E5E4] text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2] rounded transition-colors">
                 <StopCircle size={13} strokeWidth={1.75} />
                 To'xtatish
               </button>
             ) : (
-              <button
-                onClick={() => setQrScanning(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2563EB] text-xs font-medium text-white hover:bg-[#1D4ED8] rounded transition-colors"
-              >
+              <button onClick={() => setQrScanning(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2563EB] text-xs font-medium text-white hover:bg-[#1D4ED8] rounded transition-colors">
                 <QrCode size={13} strokeWidth={1.75} />
                 Kamerani yoqish
               </button>
             )}
           </div>
 
-          {/* QR Scanner */}
           {qrScanning ? (
             <div className="mb-4">
               <QRScanner onScan={handleQRScan} />
-              <p className="text-xs text-[#78716C] text-center mt-2">
-                QR kodni kamera oynasiga tutib turing — avtomatik o'qiydi
-              </p>
+              <p className="text-xs text-[#78716C] text-center mt-2">QR kodni kamera oynasiga tutib turing — avtomatik o'qiydi</p>
             </div>
           ) : (
             <div className="bg-white border border-[#E7E5E4] rounded-lg text-center py-10 px-6 mb-4">
@@ -402,29 +340,20 @@ export default function AttendancePage() {
             </div>
           )}
 
-          {/* QR xatolik xabari */}
           {qrError && (
-            <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-3 text-sm">
-              {qrError}
-            </div>
+            <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-3 text-sm">{qrError}</div>
           )}
 
-          {/* Skanerlash natijalari */}
           {qrResults.length > 0 && (
             <>
-              <p className="text-xs font-semibold text-[#78716C] uppercase tracking-wider mb-2">
-                Skanerlashlar tarixi
-              </p>
+              <p className="text-xs font-semibold text-[#78716C] uppercase tracking-wider mb-2">Skanerlashlar tarixi</p>
               <div className="bg-white border border-[#E7E5E4] rounded-lg divide-y divide-[#E7E5E4]">
                 {qrResults.map((r, i) => (
                   <div key={r.id}
                     className={`flex items-center gap-3 px-4 py-3
                       ${i===0?'rounded-t-lg':''} ${i===qrResults.length-1?'rounded-b-lg':''}
-                      ${r.tugriKun ? 'bg-[#F0FDF4]' : ''}`}
-                  >
-                    {/* Holat belgisi */}
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0
-                      ${r.tugriKun ? 'bg-[#DCFCE7]' : 'bg-[#F5F5F4]'}`}>
+                      ${r.tugriKun ? 'bg-[#F0FDF4]' : ''}`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${r.tugriKun ? 'bg-[#DCFCE7]' : 'bg-[#F5F5F4]'}`}>
                       {r.tugriKun
                         ? <CheckCircle2 size={14} className="text-[#16A34A]" strokeWidth={2} />
                         : <Check size={14} className="text-[#78716C]" strokeWidth={2} />}
@@ -445,19 +374,13 @@ export default function AttendancePage() {
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════════
-          3. LOGLAR (noto'g'ri kun yozuvlari)
-          ══════════════════════════════════════════════════════════════════ */}
+      {/* ══ 3. LOGLAR ══ */}
       {mode === 'logs' && (
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-xs font-semibold text-[#78716C] uppercase tracking-wider">
-                Noto'g'ri kun yozuvlari
-              </p>
-              <p className="text-xs text-[#A8A29E] mt-0.5">
-                Dars bo'lmagan kunda skanerlangan o'quvchilar
-              </p>
+              <p className="text-xs font-semibold text-[#78716C] uppercase tracking-wider">Noto'g'ri kun yozuvlari</p>
+              <p className="text-xs text-[#A8A29E] mt-0.5">Dars bo'lmagan kunda skanerlangan o'quvchilar</p>
             </div>
             <button onClick={loadLogs}
               className="px-3 py-1.5 border border-[#E7E5E4] text-xs font-medium text-[#78716C] hover:bg-[#F5F5F4] rounded transition-colors">
@@ -466,9 +389,7 @@ export default function AttendancePage() {
           </div>
 
           {logsError && (
-            <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-3 text-sm">
-              {logsError}
-            </div>
+            <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] rounded px-3.5 py-2.5 mb-3 text-sm">{logsError}</div>
           )}
 
           {loadingLogs ? (
@@ -493,20 +414,14 @@ export default function AttendancePage() {
                   <tbody className="divide-y divide-[#E7E5E4]">
                     {logs.map(log => (
                       <tr key={log.id} className="hover:bg-[#FAFAF9] transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-[#1C1917]">
-                          {log.students?.ism ?? '—'}
-                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-[#1C1917]">{log.students?.ism ?? '—'}</td>
                         <td className="px-4 py-3">
                           <span className="text-xs bg-[#F5F5F4] text-[#78716C] px-2 py-0.5 rounded">
                             {log.students?.groups?.nomi ?? '—'}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-[#78716C] tabular-nums">
-                          {fmtDate(log.sana)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-[#78716C] tabular-nums">
-                          {log.vaqt ?? '—'}
-                        </td>
+                        <td className="px-4 py-3 text-sm text-[#78716C] tabular-nums">{fmtDate(log.sana)}</td>
+                        <td className="px-4 py-3 text-sm text-[#78716C] tabular-nums">{log.vaqt ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>
